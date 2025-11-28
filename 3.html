@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubmate AI - Recruiting Agent</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .sidebar { width: 280px; background-color: #f8fafc; border-right: 1px solid #e2e8f0; height: 100vh; position: fixed; }
+        .main-content { margin-left: 280px; padding: 2rem; }
+        .nav-item { cursor: pointer; padding: 12px 16px; margin-bottom: 4px; border-radius: 8px; color: #475569; display: flex; align-items: center; transition: all 0.2s; }
+        .nav-item:hover { background-color: #e2e8f0; }
+        .nav-item.active { background-color: #eff6ff; color: #2563eb; font-weight: 600; }
+        
+        /* 테이블 스타일 */
+        .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th { background-color: #f9fafb; text-align: left; padding: 12px 16px; font-size: 0.85rem; font-weight: 600; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+        td { padding: 16px; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; color: #1f2937; }
+        tr:last-child td { border-bottom: none; }
+        
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .tag-blue { background-color: #dbeafe; color: #1e40af; }
+        .tag-purple { background-color: #f3e8ff; color: #6b21a8; }
+        .tag-pink { background-color: #fce7f3; color: #9d174d; }
+    </style>
+</head>
+<body>
+
+    <!-- 사이드바 (공통) -->
+    <aside class="sidebar p-6 flex flex-col">
+        <div class="mb-8">
+            <div class="text-2xl font-bold text-blue-900 flex items-center gap-2">
+                <i class="fas fa-graduation-cap text-blue-600"></i> Clubmate AI
+            </div>
+            <p class="text-xs text-gray-500 mt-1 ml-8">Smart Campus OS</p>
+        </div>
+        <nav class="flex-1">
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 pl-4">Menu</div>
+            <div class="nav-item">
+                <div class="w-6 text-center mr-3">🏠</div> 메인 관제 센터
+            </div>
+            <div class="nav-item">
+                <div class="w-6 text-center mr-3">💰</div> AI 총무 에이전트
+            </div>
+            <div class="nav-item active">
+                <div class="w-6 text-center mr-3">📝</div> AI 리크루팅 에이전트
+            </div>
+            <div class="nav-item">
+                <div class="w-6 text-center mr-3">💬</div> 규정 챗봇 (RAG)
+            </div>
+        </nav>
+    </aside>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main-content">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">📝 AI 리크루팅 에이전트</h1>
+            <p class="text-gray-500 mt-1">지원서를 <strong>LLM이 요약</strong>하고, <strong>최적의 면접 시간표</strong>를 자동 생성합니다.</p>
+        </header>
+
+        <!-- 탭 메뉴 -->
+        <div class="flex space-x-2 bg-gray-200 p-1 rounded-lg w-fit mb-6">
+            <button class="px-4 py-2 bg-white shadow rounded-md text-sm font-bold text-gray-800 transition">지원자 분석</button>
+            <button class="px-4 py-2 text-gray-600 text-sm font-medium hover:bg-gray-100 rounded-md transition" onclick="alert('데모: 시간표 탭으로 이동합니다.')">면접 시간표</button>
+        </div>
+
+        <!-- 1. 데이터 테이블 -->
+        <div class="table-container mb-8">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-gray-700 flex items-center gap-2">
+                    <i class="fas fa-list"></i> 지원자 AI 분석 리포트 (Top 5)
+                </h3>
+                <button class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold flex items-center gap-1">
+                    <i class="fas fa-sync-alt"></i> n8n 실시간 연동됨
+                </button>
+            </div>
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th>이름/학과</th>
+                        <th>지원분야</th>
+                        <th>AI 요약 (핵심 역량)</th>
+                        <th>AI 적합도</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="font-bold">김연세</div>
+                            <div class="text-xs text-gray-500">경영학과</div>
+                        </td>
+                        <td><span class="tag tag-blue">기획</span></td>
+                        <td class="text-gray-600">창업 동아리 회장 경험, 논리적 사고 강점, PPT 능력 우수</td>
+                        <td class="text-yellow-500 text-sm">⭐⭐⭐⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="font-bold">박코딩</div>
+                            <div class="text-xs text-gray-500">컴퓨터과학</div>
+                        </td>
+                        <td><span class="tag tag-purple">개발</span></td>
+                        <td class="text-gray-600">Python/React 프로젝트 3회, 깃허브 커밋 활발, 협업 툴 능숙</td>
+                        <td class="text-yellow-500 text-sm">⭐⭐⭐⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="font-bold">최디자</div>
+                            <div class="text-xs text-gray-500">산업디자인</div>
+                        </td>
+                        <td><span class="tag tag-pink">디자인</span></td>
+                        <td class="text-gray-600">포토샵/일러스트 능숙, 포트폴리오 우수, 트렌디한 감각</td>
+                        <td class="text-yellow-500 text-sm">⭐⭐⭐⭐</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 2. 액션 카드 -->
+        <div class="bg-blue-50 border border-blue-100 p-6 rounded-xl flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-bold text-blue-900 mb-1">면접 시간표 자동 생성</h3>
+                <p class="text-sm text-blue-700">면접관 5명과 지원자 45명의 시간을 분석하여 최적의 시간표를 짭니다.</p>
+            </div>
+            <button class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 shadow-lg flex items-center gap-2 transition transform hover:scale-105">
+                <i class="fas fa-magic"></i> AI 시간표 생성하기
+            </button>
+        </div>
+
+    </main>
+</body>
+</html>

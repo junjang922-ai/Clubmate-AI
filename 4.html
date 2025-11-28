@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubmate AI - Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .sidebar { width: 280px; background-color: #f8fafc; border-right: 1px solid #e2e8f0; height: 100vh; position: fixed; }
+        .main-content { margin-left: 280px; padding: 2rem; }
+        .nav-item { cursor: pointer; padding: 12px 16px; margin-bottom: 4px; border-radius: 8px; color: #475569; display: flex; align-items: center; transition: all 0.2s; }
+        .nav-item:hover { background-color: #e2e8f0; }
+        .nav-item.active { background-color: #eff6ff; color: #2563eb; font-weight: 600; }
+        
+        .chat-box { height: 550px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; display: flex; flex-direction: column; }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; }
+        .message { margin-bottom: 16px; max-width: 80%; padding: 12px 16px; border-radius: 12px; font-size: 0.95rem; line-height: 1.5; position: relative; }
+        .ai-message { background: white; border: 1px solid #e5e7eb; color: #1f2937; margin-right: auto; border-bottom-left-radius: 4px; }
+        .user-message { background: #2563eb; color: white; margin-left: auto; border-bottom-right-radius: 4px; text-align: right;}
+        
+        .chat-input-area { padding: 16px; background: white; border-top: 1px solid #e5e7eb; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+        .input-group { display: flex; gap: 8px; }
+        .chat-input { flex: 1; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; outline: none; }
+        .chat-input:focus { border-color: #2563eb; ring: 2px solid #bfdbfe; }
+        
+        .doc-card { background: white; border: 1px solid #e5e7eb; padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        
+        /* 타이핑 효과 커서 */
+        .typing::after { content: '▋'; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <!-- 사이드바 (공통) -->
+    <aside class="sidebar p-6 flex flex-col">
+        <div class="mb-8">
+            <div class="text-2xl font-bold text-blue-900 flex items-center gap-2">
+                <i class="fas fa-graduation-cap text-blue-600"></i> Clubmate AI
+            </div>
+            <p class="text-xs text-gray-500 mt-1 ml-8">Smart Campus OS</p>
+        </div>
+        <nav class="flex-1">
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 pl-4">Menu</div>
+            <div class="nav-item">
+                <div class="w-6 text-center mr-3">🏠</div> 메인 관제 센터
+            </div>
+            <div class="nav-item">
+                <div class="w-6 text-center mr-3">💰</div> AI 총무 에이전트
+            </div>
+            <div class="nav-item">
+                <div class="w-6 text-center mr-3">📝</div> AI 리크루팅 에이전트
+            </div>
+            <div class="nav-item active">
+                <div class="w-6 text-center mr-3">💬</div> 규정 챗봇 (RAG)
+            </div>
+        </nav>
+    </aside>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main-content">
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">💬 AI 규정 챗봇 (RAG)</h1>
+            <p class="text-gray-500 mt-1">동아리 회칙, 모집 요강 PDF를 학습한 AI가 24시간 자동 답변합니다.</p>
+        </header>
+
+        <div class="grid grid-cols-3 gap-6">
+            
+            <!-- 왼쪽: 채팅창 -->
+            <div class="col-span-2 chat-box shadow-md">
+                <div class="chat-messages" id="chat-container">
+                    <!-- AI 초기 메시지 -->
+                    <div class="message ai-message flex gap-3">
+                        <div class="mt-1 text-blue-600"><i class="fas fa-robot"></i></div>
+                        <div>안녕하세요! 👋<br>동아리 활동이나 모집에 대해 궁금한 점을 물어보세요.</div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-area">
+                    <div class="input-group">
+                        <input type="text" id="user-input" class="chat-input" placeholder="질문을 입력하세요... (예: 시험 기간에는 활동하나요?)" onkeypress="handleEnter(event)">
+                        <button class="bg-blue-600 text-white px-6 rounded-lg hover:bg-blue-700 transition" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 지식 베이스 -->
+            <div class="col-span-1">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-book"></i> 지식 베이스 (KB)
+                    </h3>
+                    
+                    <div class="doc-card">
+                        <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-gray-700">2025_모집요강.pdf</p>
+                            <p class="text-xs text-green-600 font-semibold">● 학습 완료</p>
+                        </div>
+                    </div>
+                    
+                    <div class="doc-card">
+                        <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-gray-700">YFL_회칙_v2.pdf</p>
+                            <p class="text-xs text-green-600 font-semibold">● 학습 완료</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <label class="block w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-center text-sm text-gray-500 cursor-pointer hover:border-blue-400 hover:text-blue-500 transition">
+                            <i class="fas fa-plus mb-1"></i><br>새 문서 업로드
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function handleEnter(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const container = document.getElementById('chat-container');
+            const text = input.value.trim();
+            
+            if (!text) return;
+
+            // 1. 사용자 메시지 추가
+            const userDiv = document.createElement('div');
+            userDiv.className = 'message user-message';
+            userDiv.textContent = text;
+            container.appendChild(userDiv);
+            
+            input.value = '';
+            container.scrollTop = container.scrollHeight;
+
+            // 2. AI 답변 시뮬레이션 (데모용 고정 답변)
+            setTimeout(() => {
+                const aiDiv = document.createElement('div');
+                aiDiv.className = 'message ai-message flex gap-3';
+                
+                // 데모 답변 로직
+                let responseText = "";
+                if (text.includes("시험") || text.includes("기간")) {
+                    responseText = `네, <strong>회칙 제3조 2항</strong>에 따라 시험 기간 <strong>2주 전부터는 모든 공식 활동을 중단</strong>합니다. 📚<br><br>단, 동아리방은 24시간 개방되어 스터디 목적으로 자유롭게 사용하실 수 있습니다.`;
+                } else {
+                    responseText = "죄송합니다. 학습된 문서에서 해당 내용을 찾을 수 없습니다. 운영진에게 직접 문의해주세요!";
+                }
+
+                aiDiv.innerHTML = `
+                    <div class="mt-1 text-blue-600"><i class="fas fa-robot"></i></div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-500 border border-gray-200">참고 문서: 회칙_v2.pdf</span>
+                        </div>
+                        ${responseText}
+                    </div>
+                `;
+                container.appendChild(aiDiv);
+                container.scrollTop = container.scrollHeight;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

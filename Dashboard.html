@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubmate AI Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .sidebar { width: 280px; background-color: #f8fafc; border-right: 1px solid #e2e8f0; height: 100vh; position: fixed; }
+        .main-content { margin-left: 280px; padding: 2rem; }
+        .nav-item { cursor: pointer; padding: 12px 16px; margin-bottom: 4px; border-radius: 8px; color: #475569; display: flex; align-items: center; transition: all 0.2s; }
+        .nav-item:hover { background-color: #e2e8f0; }
+        .nav-item.active { background-color: #eff6ff; color: #2563eb; font-weight: 600; }
+        .nav-icon { width: 24px; text-align: center; margin-right: 12px; }
+        .kpi-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .agent-status { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1rem; border-left: 4px solid; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Chat UI */
+        .chat-container { height: 500px; overflow-y: auto; background: #f9fafb; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; }
+        .message { max-width: 80%; margin-bottom: 16px; padding: 12px 16px; border-radius: 12px; font-size: 0.95rem; line-height: 1.5; }
+        .user-msg { background-color: #2563eb; color: white; margin-left: auto; border-bottom-right-radius: 4px; }
+        .ai-msg { background-color: white; color: #1f2937; border: 1px solid #e5e7eb; margin-right: auto; border-bottom-left-radius: 4px; }
+        
+        /* Loading Spinner */
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px;}
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- 사이드바 -->
+    <aside class="sidebar p-6 flex flex-col">
+        <div class="mb-8">
+            <div class="text-2xl font-bold text-blue-900 flex items-center gap-2">
+                <i class="fas fa-graduation-cap text-blue-600"></i> Clubmate AI
+            </div>
+            <p class="text-xs text-gray-500 mt-1 ml-8">Smart Campus OS</p>
+        </div>
+
+        <nav class="flex-1">
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 pl-4">Menu</div>
+            <div class="nav-item active" onclick="switchTab('dashboard', this)">
+                <div class="nav-icon">🏠</div> 메인 관제 센터
+            </div>
+            <div class="nav-item" onclick="switchTab('finance', this)">
+                <div class="nav-icon">💰</div> AI 총무 에이전트
+            </div>
+            <div class="nav-item" onclick="switchTab('recruit', this)">
+                <div class="nav-icon">📝</div> AI 리크루팅 에이전트
+            </div>
+            <div class="nav-item" onclick="switchTab('chatbot', this)">
+                <div class="nav-icon">💬</div> 규정 챗봇 (RAG)
+            </div>
+        </nav>
+
+        <div class="mt-auto bg-blue-50 p-4 rounded-xl">
+            <div class="flex items-center gap-2 text-sm text-blue-800 font-semibold mb-2">
+                <i class="fas fa-bolt"></i> n8n Status
+            </div>
+            <div class="text-xs text-blue-600 space-y-1">
+                <p>🟢 OCR Pipeline: Active</p>
+                <p>🟢 LLM Agent: Active</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main-content">
+        
+        <!-- 1. 대시보드 탭 -->
+        <div id="dashboard" class="tab-content active">
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">AI 관제 센터</h1>
+                <p class="text-gray-500 mt-1">👋 환영합니다! <strong>YFL 29기</strong> 운영 현황을 AI가 실시간으로 분석 중입니다.</p>
+            </header>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="kpi-card">
+                    <p class="text-sm text-gray-500 mb-1">💰 총 예산 잔액</p>
+                    <h3 class="text-3xl font-bold text-blue-600">₩ 1,250,000</h3>
+                    <p class="text-xs text-red-500 mt-2">▼ 15% 사용 (이번 주)</p>
+                </div>
+                <div class="kpi-card">
+                    <p class="text-sm text-gray-500 mb-1">📝 신규 지원자</p>
+                    <h3 class="text-3xl font-bold text-gray-800">45 명</h3>
+                    <p class="text-xs text-green-500 mt-2">▲ 5명 (오늘)</p>
+                </div>
+                <div class="kpi-card">
+                    <p class="text-sm text-gray-500 mb-1">🤖 AI 처리 건수</p>
+                    <h3 class="text-3xl font-bold text-gray-800">128 건</h3>
+                    <p class="text-xs text-gray-400 mt-2">이번 달 누적</p>
+                </div>
+                <div class="kpi-card">
+                    <p class="text-sm text-gray-500 mb-1">📅 다음 일정</p>
+                    <h3 class="text-3xl font-bold text-gray-800">D-2</h3>
+                    <p class="text-xs text-blue-500 mt-2">정기 세션 (11/20)</p>
+                </div>
+            </div>
+
+            <!-- Agent Logs -->
+            <h2 class="text-xl font-bold text-gray-800 mb-4">📡 AI 에이전트 활동 로그</h2>
+            <div class="agent-status border-blue-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">Finance Agent</span>
+                        <p class="text-gray-800 mt-2 font-medium">어제 회식 영수증 3건의 처리가 완료되었습니다.</p>
+                        <p class="text-sm text-gray-500">분류: 식비 | 총액: 88,000원 | 저장소: Google Sheets</p>
+                    </div>
+                    <span class="text-xs text-gray-400">10분 전</span>
+                </div>
+            </div>
+            <div class="agent-status border-green-500">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">Recruit Agent</span>
+                        <p class="text-gray-800 mt-2 font-medium">지원자 45명의 핵심 역량 분석 및 요약 완료.</p>
+                        <p class="text-sm text-gray-500">면접관 일정 대조 완료 | 최적 시간표 생성 대기 중</p>
+                    </div>
+                    <span class="text-xs text-gray-400">1시간 전</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. AI 총무 탭 -->
+        <div id="finance" class="tab-content">
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">💰 AI 총무 에이전트</h1>
+                <p class="text-gray-500 mt-1">영수증 사진을 업로드하면 <strong>OCR 및 LLM</strong>이 장부에 자동 기록합니다.</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- 업로드 구역 -->
+                <div class="bg-white p-8 rounded-xl shadow-sm border-2 border-dashed border-gray-300 text-center hover:border-blue-500 transition-colors cursor-pointer" onclick="simulateProcessing()">
+                    <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500 text-2xl">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-700">영수증 이미지 업로드</h3>
+                    <p class="text-sm text-gray-500 mt-2">클릭하여 파일을 선택하거나 드래그하세요.</p>
+                    <p class="text-xs text-blue-500 mt-4 font-semibold">*데모: 클릭 시 분석 시뮬레이션이 시작됩니다.</p>
+                </div>
+
+                <!-- 분석 결과 구역 -->
+                <div id="ocr-result" class="hidden bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                    <div class="flex items-center gap-2 mb-4 text-green-600 font-bold">
+                        <i class="fas fa-check-circle"></i> AI 분석 완료
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">상호명</label>
+                            <input type="text" value="BBQ 치킨 연세점" class="w-full p-2 border rounded-lg bg-gray-50">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">일시</label>
+                                <input type="text" value="2025-11-28 19:30" class="w-full p-2 border rounded-lg bg-gray-50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">총 금액</label>
+                                <input type="text" value="88,000" class="w-full p-2 border rounded-lg bg-gray-50 font-bold text-blue-600">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">예산 분류 (AI 추천)</label>
+                            <select class="w-full p-2 border rounded-lg bg-white">
+                                <option>회식비 (식대)</option>
+                                <option>운영비</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">상세 품목</label>
+                            <textarea class="w-full p-2 border rounded-lg bg-gray-50 h-20">황금올리브치킨(2), 생맥주 500cc(8), 감자튀김(1)</textarea>
+                        </div>
+                        <button class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="alert('구글 시트에 저장되었습니다!')">
+                            장부 등록 (Google Sheets)
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 로딩 화면 -->
+                <div id="ocr-loading" class="hidden bg-white p-6 rounded-xl shadow-lg border border-gray-100 flex flex-col justify-center items-center h-full">
+                    <div class="spinner mb-4" style="width: 40px; height: 40px;"></div>
+                    <p class="text-gray-600 font-medium">AI 에이전트가 분석 중입니다...</p>
+                    <p class="text-xs text-gray-400 mt-2">OCR → LLM Extract → Classification</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. AI 리크루팅 탭 -->
+        <div id="recruit" class="tab-content">
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">📝 AI 리크루팅 에이전트</h1>
+                <p class="text-gray-500 mt-1">지원서를 <strong>LLM이 요약</strong>하고, <strong>최적의 면접 시간표</strong>를 자동 생성합니다.</p>
+            </header>
+
+            <!-- 탭 메뉴 -->
+            <div class="flex space-x-1 bg-gray-200 p-1 rounded-lg w-fit mb-6">
+                <button class="px-4 py-2 bg-white rounded shadow text-sm font-bold text-gray-800">지원자 분석</button>
+                <button class="px-4 py-2 text-gray-600 text-sm font-medium hover:bg-gray-100 rounded">면접 시간표</button>
+            </div>
+
+            <!-- 데이터 테이블 -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                    <h3 class="font-bold text-gray-700">지원자 AI 분석 리포트 (Top 5)</h3>
+                    <button class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold">
+                        <i class="fas fa-sync-alt"></i> n8n 실시간 연동됨
+                    </button>
+                </div>
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-50 text-gray-500">
+                        <tr>
+                            <th class="p-4">이름/학과</th>
+                            <th class="p-4">지원분야</th>
+                            <th class="p-4">AI 요약 (핵심 역량)</th>
+                            <th class="p-4">적합도</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr>
+                            <td class="p-4 font-medium">김연세<br><span class="text-xs text-gray-400">경영학과</span></td>
+                            <td class="p-4"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">기획</span></td>
+                            <td class="p-4 text-gray-600">창업 동아리 회장 경험, 논리적 사고 강점, PPT 능력 우수</td>
+                            <td class="p-4 text-yellow-500">⭐⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-medium">박코딩<br><span class="text-xs text-gray-400">컴퓨터과학</span></td>
+                            <td class="p-4"><span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">개발</span></td>
+                            <td class="p-4 text-gray-600">Python/React 프로젝트 3회, 깃허브 커밋 활발, 협업 툴 능숙</td>
+                            <td class="p-4 text-yellow-500">⭐⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-medium">최디자<br><span class="text-xs text-gray-400">산업디자인</span></td>
+                            <td class="p-4"><span class="bg-pink-100 text-pink-800 px-2 py-1 rounded text-xs">디자인</span></td>
+                            <td class="p-4 text-gray-600">포토샵/일러스트 능숙, 포트폴리오 우수, 트렌디한 감각</td>
+                            <td class="p-4 text-yellow-500">⭐⭐⭐⭐</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-6 p-6 bg-blue-50 rounded-xl border border-blue-100 text-center">
+                <i class="fas fa-magic text-blue-500 text-2xl mb-2"></i>
+                <h3 class="font-bold text-gray-800">면접 시간표 자동 생성</h3>
+                <p class="text-sm text-gray-500 mb-4">면접관 5명과 지원자 45명의 시간을 분석하여 최적의 시간표를 짭니다.</p>
+                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-lg">
+                    ⚡ AI 시간표 생성하기
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. 챗봇 탭 -->
+        <div id="chatbot" class="tab-content">
+            <header class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-900">💬 AI 규정 챗봇 (RAG)</h1>
+                <p class="text-gray-500 mt-1">회칙 문서를 학습한 AI가 24시간 답변합니다.</p>
+            </header>
+
+            <div class="grid grid-cols-3 gap-6">
+                <!-- 채팅창 -->
+                <div class="col-span-2 chat-container">
+                    <div class="message ai-msg">
+                        안녕하세요! 👋<br>동아리 활동이나 모집, 회칙에 대해 궁금한 점을 물어보세요.
+                    </div>
+                    
+                    <!-- 데모용 대화 (숨겨져 있다가 나타남) -->
+                    <div id="chat-demo" class="hidden">
+                        <div class="message user-msg">
+                            시험 기간에는 활동 어떻게 되나요?
+                        </div>
+                        <div class="message ai-msg flex gap-3">
+                            <div class="mt-1"><i class="fas fa-robot text-blue-500"></i></div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-xs bg-gray-200 px-2 py-0.5 rounded text-gray-600">참고 문서: 회칙_v2.pdf</span>
+                                </div>
+                                네, <strong>회칙 제3조 2항</strong>에 따라 시험 기간 <strong>2주 전부터는 모든 공식 활동을 중단</strong>합니다. 📚<br><br>
+                                단, 동아리방은 24시간 개방되어 스터디 목적으로 자유롭게 사용하실 수 있습니다.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 문서 관리 -->
+                <div class="col-span-1">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-800 mb-4">📚 지식 베이스 (Knowledge Base)</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
+                                <i class="fas fa-file-pdf text-red-500"></i>
+                                <div class="flex-1">
+                                    <p class="text-sm font-bold text-gray-700">2025_모집요강.pdf</p>
+                                    <p class="text-xs text-green-600">● 학습 완료</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
+                                <i class="fas fa-file-pdf text-red-500"></i>
+                                <div class="flex-1">
+                                    <p class="text-sm font-bold text-gray-700">YFL_회칙_v2.pdf</p>
+                                    <p class="text-xs text-green-600">● 학습 완료</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 border-t pt-4">
+                            <label class="block w-full p-2 border-2 border-dashed border-gray-300 rounded-lg text-center text-sm text-gray-500 cursor-pointer hover:border-blue-400">
+                                + 새 문서 업로드
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 입력창 -->
+            <div class="mt-4 flex gap-2">
+                <input type="text" id="chat-input" placeholder="질문을 입력하세요..." class="flex-1 p-4 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:border-blue-500" onkeypress="handleChat(event)">
+                <button class="bg-blue-600 text-white px-6 rounded-xl font-bold hover:bg-blue-700" onclick="showChatResult()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // 탭 전환 함수
+        function switchTab(tabId, element) {
+            // 모든 탭 컨텐츠 숨기기
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // 선택한 탭 보이기
+            document.getElementById(tabId).classList.add('active');
+            
+            // 네비게이션 스타일 업데이트
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // AI 영수증 분석 시뮬레이션
+        function simulateProcessing() {
+            document.getElementById('ocr-loading').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('ocr-loading').classList.add('hidden');
+                document.getElementById('ocr-result').classList.remove('hidden');
+            }, 2000); // 2초 후 결과 표시
+        }
+
+        // 챗봇 시뮬레이션
+        function handleChat(e) {
+            if (e.key === 'Enter') showChatResult();
+        }
+
+        function showChatResult() {
+            const input = document.getElementById('chat-input');
+            if (input.value.trim() === '') return;
+            
+            // 실제 입력값은 무시하고 준비된 데모 보여주기 (시연용)
+            input.value = ''; 
+            document.getElementById('chat-demo').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
